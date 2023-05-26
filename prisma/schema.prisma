@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model feedback {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rating        Int
+  comment       String?    @db.VarChar
+  customer_id   String     @db.Uuid
+  restaurant_id String     @db.Uuid
+  user          user       @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  restaurant    restaurant @relation(fields: [restaurant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model menu_item {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String       @db.VarChar
+  description   String?      @db.VarChar
+  price         Int
+  image_url     String?      @db.VarChar
+  restaurant_id String       @db.Uuid
+  restaurant    restaurant   @relation(fields: [restaurant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_item    order_item[]
+}
+
+model order {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  status        String       @db.VarChar
+  customer_id   String       @db.Uuid
+  restaurant_id String       @db.Uuid
+  user          user         @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  restaurant    restaurant   @relation(fields: [restaurant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_item    order_item[]
+}
+
+model order_item {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_id     String    @db.Uuid
+  menu_item_id String    @db.Uuid
+  menu_item    menu_item @relation(fields: [menu_item_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order        order     @relation(fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model promotion {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title          String           @db.VarChar
+  description    String?          @db.VarChar
+  start_date     DateTime         @db.Date
+  end_date       DateTime         @db.Date
+  restaurant_id  String           @db.Uuid
+  restaurant     restaurant       @relation(fields: [restaurant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_promotion user_promotion[]
+}
+
+model reservation {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  date_time     DateTime   @db.Timestamp(6)
+  customer_id   String     @db.Uuid
+  restaurant_id String     @db.Uuid
+  table_number  Int
+  user          user       @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  restaurant    restaurant @relation(fields: [restaurant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model restaurant {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String        @db.VarChar
+  owner_id    String        @db.Uuid
+  feedback    feedback[]
+  menu_item   menu_item[]
+  order       order[]
+  promotion   promotion[]
+  reservation reservation[]
+  user        user          @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roq_user_id    String           @db.VarChar
+  tenant_id      String           @db.VarChar
+  feedback       feedback[]
+  order          order[]
+  reservation    reservation[]
+  restaurant     restaurant[]
+  user_promotion user_promotion[]
+}
+
+model user_promotion {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String    @db.Uuid
+  promotion_id String    @db.Uuid
+  promotion    promotion @relation(fields: [promotion_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user         user      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
